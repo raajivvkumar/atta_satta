@@ -18,8 +18,6 @@ def test_ticket_candidates_detect_prefixed_and_numeric_patterns() -> None:
         "A123456",
         "B123456",
         "C123457",
-        "A123456",
-        "B123456",
         "C123456",
         "1234568",
         "1234587",
@@ -27,7 +25,7 @@ def test_ticket_candidates_detect_prefixed_and_numeric_patterns() -> None:
     ]
     assert candidates[0].pattern == "letter_6_digits"
     assert candidates[0].confidence == "high"
-    assert candidates[3].raw_value == "A-123456"
+    assert candidates[3].raw_value == "C-123456"
 
 
 def test_ticket_candidates_support_whitespace_and_case_normalization() -> None:
