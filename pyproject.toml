@@ -29,12 +29,28 @@ ocr = [
   "Pillow>=10.4,<12",
   "pytesseract>=0.3.13,<1",
 ]
+analytics = [
+  "scipy>=1.14,<2",
+  "scikit-learn>=1.5,<2",
+]
+astronomy = [
+  "skyfield>=1.49,<2",
+]
+ui = [
+  "streamlit>=1.38,<2",
+]
+all = [
+  "atta-satta[documents,ocr,analytics,astronomy,ui]",
+]
 dev = [
   "pytest>=8.3,<9",
   "pytest-cov>=6,<7",
   "ruff>=0.12,<1",
   "mypy>=1.17,<2",
 ]
+
+[project.scripts]
+atta-satta = "atta_satta.cli:main"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/atta_satta"]
