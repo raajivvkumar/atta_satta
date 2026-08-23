@@ -1,7 +1,5 @@
 """Logging configuration for Atta Satta."""
 
-from __future__ import annotations
-
 import logging
 
 
