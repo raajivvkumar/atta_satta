@@ -1,0 +1,1 @@
+"""Experimental astronomical feature calculation."""
