@@ -1,0 +1,45 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+*.egg
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+.coverage.*
+
+# Virtual environments
+.venv/
+venv/
+env/
+
+# Environment files
+.env
+.env.*
+!.env.example
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Project data
+/data/raw/*
+/data/extracted/*
+/data/validated/*
+/data/processed/*
+
+# Local databases
+*.db
+*.sqlite
+*.sqlite3
+
+# Experiment/model artifacts
+/models/artifacts/
+/checkpoints/
