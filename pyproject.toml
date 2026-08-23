@@ -40,7 +40,15 @@ ui = [
   "streamlit>=1.38,<2",
 ]
 all = [
-  "atta-satta[documents,ocr,analytics,astronomy,ui]",
+  "PyMuPDF>=1.24,<2",
+  "pdfplumber>=0.11,<1",
+  "opencv-python-headless>=4.10,<5",
+  "Pillow>=10.4,<12",
+  "pytesseract>=0.3.13,<1",
+  "scipy>=1.14,<2",
+  "scikit-learn>=1.5,<2",
+  "skyfield>=1.49,<2",
+  "streamlit>=1.38,<2",
 ]
 dev = [
   "pytest>=8.3,<9",
