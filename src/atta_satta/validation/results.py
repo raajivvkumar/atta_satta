@@ -53,7 +53,11 @@ def validate_ticket_number(value: str, *, minimum: int, maximum: int) -> Validat
         )
 
     if not normalized.isdigit():
-        return ValidationResult(normalized, ValidationStatus.REVIEW, "non-numeric or malformed ticket")
+        return ValidationResult(
+            normalized,
+            ValidationStatus.REVIEW,
+            "non-numeric or malformed ticket",
+        )
 
     number = int(normalized)
     if not minimum <= number <= maximum:
