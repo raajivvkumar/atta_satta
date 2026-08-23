@@ -9,7 +9,6 @@ from pathlib import Path
 
 SUPPORTED_EXTENSIONS = {
     ".pdf",
-    ".txt",
     ".png",
     ".jpg",
     ".jpeg",
