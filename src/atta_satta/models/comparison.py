@@ -87,7 +87,10 @@ def compare_models(
             0,
             0,
             0.0,
-            "Descriptive statistics are implemented; inferential model selection requires a configured lottery schema.",
+            (
+                "Descriptive statistics are implemented; inferential model selection "
+                "requires a configured lottery schema."
+            ),
         ),
         ModelResult(
             "Historical-feature ML",
@@ -103,7 +106,10 @@ def compare_models(
             0,
             0,
             0.0,
-            "Astronomy is experimental and must demonstrate out-of-sample improvement before contributing to ranking.",
+            (
+                "Astronomy is experimental and must demonstrate out-of-sample "
+                "improvement before contributing to ranking."
+            ),
         ),
         ModelResult(
             "Combined model",
@@ -111,6 +117,9 @@ def compare_models(
             0,
             0,
             0.0,
-            "Combined weights must be learned/validated; no unvalidated astronomy contribution is applied.",
+            (
+                "Combined weights must be learned/validated; no unvalidated astronomy "
+                "contribution is applied."
+            ),
         ),
     ]
