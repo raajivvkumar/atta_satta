@@ -3,12 +3,17 @@
 from __future__ import annotations
 
 import argparse
+from datetime import date
 from pathlib import Path
 
 from atta_satta.config import Settings
 from atta_satta.database.queries import LotteryReader
+from atta_satta.database.sqlite import LotteryRepository
 from atta_satta.evaluation.backtest import walk_forward_backtest
+from atta_satta.extraction.pdf import extract_pdf_text
 from atta_satta.models.comparison import compare_models
+from atta_satta.ocr.image import ocr_image
+from atta_satta.pipeline.importer import import_extracted_text
 from atta_satta.prediction.ranking import rank_candidates
 from atta_satta.statistics.analysis import distribution_summary, frequency_table
 
@@ -41,9 +46,60 @@ def main() -> None:
     models.add_argument("--top-k", type=int, default=10)
     models.add_argument("--minimum-history", type=int, default=20)
 
+    import_parser = subparsers.add_parser(
+        "import",
+        help="extract ticket numbers from a PDF/image and import them",
+    )
+    import_parser.add_argument("source", type=Path)
+    import_parser.add_argument("--game", required=True)
+    import_parser.add_argument("--draw-date", type=date.fromisoformat, required=True)
+    import_parser.add_argument("--minimum", type=int, default=0)
+    import_parser.add_argument("--maximum", type=int, default=9_999_999)
+
     args = parser.parse_args()
     settings = Settings.from_project_root()
     database = args.database or settings.data_dir / "atta_satta.sqlite3"
+
+    if args.command == "import":
+        repository = LotteryRepository(database)
+        source = args.source.resolve()
+        suffix = source.suffix.lower()
+        total = 0
+
+        if suffix == ".pdf":
+            for page in extract_pdf_text(source):
+                inserted = import_extracted_text(
+                    repository,
+                    page.text,
+                    game=args.game,
+                    draw_date=args.draw_date,
+                    source_path=source,
+                    source_page=page.page_number,
+                    extraction_method=page.extraction_method,
+                    minimum_ticket=args.minimum,
+                    maximum_ticket=args.maximum,
+                )
+                total += inserted
+        elif suffix in {".png", ".jpg", ".jpeg", ".tif", ".tiff", ".webp"}:
+            result = ocr_image(source)
+            total = import_extracted_text(
+                repository,
+                result.text,
+                game=args.game,
+                draw_date=args.draw_date,
+                source_path=source,
+                extraction_method=result.extraction_method,
+                extraction_confidence=result.confidence,
+                minimum_ticket=args.minimum,
+                maximum_ticket=args.maximum,
+            )
+        else:
+            raise ValueError(f"Unsupported source format: {source.suffix}")
+
+        print(f"Detected/imported ticket candidates: {total}")
+        print("Review status is preserved; extraction does not guarantee correctness.")
+        return
+
     reader = LotteryReader(database)
     records = reader.records(game=args.game, valid_only=True)
 
