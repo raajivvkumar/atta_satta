@@ -7,7 +7,16 @@ from dataclasses import dataclass
 from datetime import UTC, datetime
 from pathlib import Path
 
-SUPPORTED_EXTENSIONS = {".pdf", ".png", ".jpg", ".jpeg", ".tif", ".tiff", ".webp"}
+SUPPORTED_EXTENSIONS = {
+    ".pdf",
+    ".txt",
+    ".png",
+    ".jpg",
+    ".jpeg",
+    ".tif",
+    ".tiff",
+    ".webp",
+}
 
 
 @dataclass(frozen=True, slots=True)
