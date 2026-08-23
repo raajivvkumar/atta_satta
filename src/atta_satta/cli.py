@@ -10,6 +10,7 @@ from atta_satta.config import Settings
 from atta_satta.database.queries import LotteryReader
 from atta_satta.database.sqlite import LotteryRepository
 from atta_satta.evaluation.backtest import walk_forward_backtest
+from atta_satta.extraction.candidates import extract_ticket_candidates
 from atta_satta.extraction.pdf import extract_pdf_text
 from atta_satta.models.comparison import compare_models
 from atta_satta.ocr.image import ocr_image
@@ -46,6 +47,12 @@ def main() -> None:
     models.add_argument("--top-k", type=int, default=10)
     models.add_argument("--minimum-history", type=int, default=20)
 
+    ocr_parser = subparsers.add_parser(
+        "ocr",
+        help="OCR an image and display detected ticket-number candidates",
+    )
+    ocr_parser.add_argument("source", type=Path)
+
     import_parser = subparsers.add_parser(
         "import",
         help="extract ticket numbers from a PDF/image and import them",
@@ -59,6 +66,25 @@ def main() -> None:
     args = parser.parse_args()
     settings = Settings.from_project_root()
     database = args.database or settings.data_dir / "atta_satta.sqlite3"
+
+    if args.command == "ocr":
+        source = args.source.resolve()
+        result = ocr_image(source)
+        candidates = extract_ticket_candidates(result.text)
+        print(f"Source: {source}")
+        confidence = result.confidence if result.confidence is not None else "N/A"
+        print(f"OCR confidence: {confidence}")
+        print(f"Detected ticket candidates: {len(candidates)}")
+        print("Pattern\tTicket\tConfidence\tRaw")
+        for candidate in candidates:
+            print(
+                f"{candidate.pattern}\t{candidate.value}\t"
+                f"{candidate.confidence}\t{candidate.raw_value!r}"
+            )
+        print("\nOCR output:")
+        print(result.text)
+        print("Review candidates before importing; OCR does not guarantee correctness.")
+        return
 
     if args.command == "import":
         repository = LotteryRepository(database)
