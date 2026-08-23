@@ -7,6 +7,7 @@ from datetime import UTC, date, datetime
 from pathlib import Path
 
 from atta_satta.database.sqlite import LotteryRepository
+from atta_satta.extraction.candidates import extract_ticket_candidates
 from atta_satta.ingestion.files import describe_source_file
 from atta_satta.normalization.models import LotteryDraw, RecordStatus
 from atta_satta.normalization.text import normalize_ticket_number
@@ -84,3 +85,64 @@ def import_candidates(
         for candidate in candidates
     ]
     return repository.add_draws(draws)
+
+
+def extract_import_candidates(
+    text: str,
+    *,
+    game: str,
+    draw_date: date,
+    source_path: Path,
+    source_page: int | None = None,
+    extraction_method: str = "unknown",
+    extraction_confidence: float | None = None,
+) -> list[ImportCandidate]:
+    """Convert detected ticket patterns into import-ready candidates.
+
+    Detection is deliberately separate from validation. Every detected ticket
+    is retained with its raw source text so callers can review it before commit.
+    """
+    return [
+        ImportCandidate(
+            game=game,
+            draw_date=draw_date,
+            ticket_number=candidate.value,
+            source_path=source_path,
+            source_page=source_page,
+            extraction_method=extraction_method,
+            extraction_confidence=extraction_confidence,
+            original_text=candidate.raw_value,
+        )
+        for candidate in extract_ticket_candidates(text)
+    ]
+
+
+def import_extracted_text(
+    repository: LotteryRepository,
+    text: str,
+    *,
+    game: str,
+    draw_date: date,
+    source_path: Path,
+    minimum_ticket: int,
+    maximum_ticket: int,
+    source_page: int | None = None,
+    extraction_method: str = "unknown",
+    extraction_confidence: float | None = None,
+) -> int:
+    """Extract ticket patterns from text, validate them, and persist them."""
+    candidates = extract_import_candidates(
+        text,
+        game=game,
+        draw_date=draw_date,
+        source_path=source_path,
+        source_page=source_page,
+        extraction_method=extraction_method,
+        extraction_confidence=extraction_confidence,
+    )
+    return import_candidates(
+        repository,
+        candidates,
+        minimum_ticket=minimum_ticket,
+        maximum_ticket=maximum_ticket,
+    )
