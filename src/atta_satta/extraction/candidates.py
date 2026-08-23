@@ -21,12 +21,17 @@ class TicketCandidate:
 # Explicit patterns are deliberately conservative. A numeric ticket is only
 # recognized when it contains exactly seven digits; prefixed tickets contain
 # one letter and exactly six digits, optionally separated by - or whitespace.
+# Numeric tickets must not be embedded in an alphanumeric token such as
+# ``XA1234567`` because that is not a standalone ticket representation.
 _TICKET_PATTERNS: tuple[tuple[str, re.Pattern[str]], ...] = (
     (
         "letter_6_digits",
         re.compile(r"(?<![A-Za-z0-9])([A-Za-z])\s*-?\s*(\d{6})(?!\d)"),
     ),
-    ("numeric_7_digits", re.compile(r"(?<!\d)(\d{7})(?!\d)")),
+    (
+        "numeric_7_digits",
+        re.compile(r"(?<![A-Za-z0-9])(\d{7})(?![A-Za-z0-9])"),
+    ),
 )
 
 
