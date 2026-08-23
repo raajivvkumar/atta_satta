@@ -1,8 +1,12 @@
 from datetime import date
 
 from atta_satta.database.sqlite import LotteryRepository
-from atta_satta.pipeline.importer import ImportCandidate, import_candidates, prepare_candidate
 from atta_satta.normalization.models import RecordStatus
+from atta_satta.pipeline.importer import (
+    ImportCandidate,
+    import_candidates,
+    prepare_candidate,
+)
 
 
 def test_prepare_candidate_preserves_source_and_validation(tmp_path) -> None:
