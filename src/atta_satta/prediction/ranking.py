@@ -2,10 +2,9 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
-from datetime import date
-from math import exp
 import random
+from dataclasses import dataclass
+from math import exp
 
 from atta_satta.normalization.models import LotteryDraw
 
@@ -80,8 +79,6 @@ def rank_candidates(
 
         historical = 0.6 * frequency_score + 0.4 * recency_score
         statistical = frequency_score
-        astronomy = 0.0
-        model = historical
         score = 0.7 * historical + 0.3 * statistical
         supporting: list[str] = []
         contradicting: list[str] = []
@@ -94,7 +91,17 @@ def rank_candidates(
         elif count:
             contradicting.append(f"current gap is {gap} draws")
         explanation = "; ".join(supporting or contradicting)
-        scored.append((ticket, score, statistical, historical, tuple(supporting), tuple(contradicting), explanation))
+        scored.append(
+            (
+                ticket,
+                score,
+                statistical,
+                historical,
+                tuple(supporting),
+                tuple(contradicting),
+                explanation,
+            )
+        )
 
     scored.sort(key=lambda item: (-item[1], int(item[0])))
     return [
