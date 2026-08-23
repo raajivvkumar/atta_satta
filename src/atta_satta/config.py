@@ -17,7 +17,7 @@ class Settings:
     validated_data_dir: Path
 
     @classmethod
-    def from_project_root(cls, project_root: Path | None = None) -> "Settings":
+    def from_project_root(cls, project_root: Path | None = None) -> Settings:
         """Build settings from an explicit project root or the repository root."""
         root = (project_root or Path(__file__).resolve().parents[2]).resolve()
         data_dir = root / "data"
