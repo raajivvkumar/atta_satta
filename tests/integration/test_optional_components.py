@@ -33,8 +33,8 @@ def test_statistics_and_prediction_pipeline() -> None:
 
 
 def test_source_hash_is_reproducible(tmp_path: Path) -> None:
-    source = tmp_path / "sample.txt"
-    source.write_text("lottery result", encoding="utf-8")
+    source = tmp_path / "sample.pdf"
+    source.write_bytes(b"lottery result")
 
     first = describe_source_file(source)
     second = describe_source_file(source)
