@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from datetime import date, datetime, timezone
+from datetime import UTC, date, datetime
 from pathlib import Path
 
 from atta_satta.database.sqlite import LotteryRepository
@@ -59,7 +59,7 @@ def prepare_candidate(
         extraction_confidence=candidate.extraction_confidence,
         original_text=candidate.original_text,
         status=status_map[validation.status],
-        imported_at=datetime.now(timezone.utc),
+        imported_at=datetime.now(UTC),
     )
 
 
