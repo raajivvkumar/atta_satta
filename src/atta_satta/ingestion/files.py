@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import hashlib
 from dataclasses import dataclass
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 
 SUPPORTED_EXTENSIONS = {".pdf", ".png", ".jpg", ".jpeg", ".tif", ".tiff", ".webp"}
@@ -43,7 +43,7 @@ def describe_source_file(path: Path) -> SourceFile:
         filename=path.name,
         sha256=fingerprint_file(path),
         size_bytes=stat.st_size,
-        imported_at=datetime.now(timezone.utc),
+        imported_at=datetime.now(UTC),
     )
 
 
