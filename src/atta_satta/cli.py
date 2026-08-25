@@ -93,7 +93,8 @@ def main() -> None:
         total = 0
 
         if suffix == ".pdf":
-            for page in extract_pdf_text(source):
+            pages = extract_pdf_text(source)
+            for page in pages:
                 inserted = import_extracted_text(
                     repository,
                     page.text,
@@ -102,8 +103,14 @@ def main() -> None:
                     source_path=source,
                     source_page=page.page_number,
                     extraction_method=page.extraction_method,
+                    extraction_confidence=page.extraction_confidence,
                     minimum_ticket=args.minimum,
                     maximum_ticket=args.maximum,
+                )
+                print(
+                    f"Page {page.page_number}: method={page.extraction_method} "
+                    f"confidence={page.extraction_confidence if page.extraction_confidence is not None else 'N/A'} "
+                    f"candidates={inserted}"
                 )
                 total += inserted
         elif suffix in {".png", ".jpg", ".jpeg", ".tif", ".tiff", ".webp"}:
