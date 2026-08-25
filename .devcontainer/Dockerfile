@@ -1,9 +1,14 @@
-FROM mcr.microsoft.com/devcontainers/python:1-3.12-bookworm
+FROM mcr.microsoft.com/devcontainers/base:alpine-3.22
 
 USER root
 
-RUN apt-get update \
-    && apt-get install -y --no-install-recommends tesseract-ocr tesseract-ocr-eng \
-    && rm -rf /var/lib/apt/lists/*
+RUN apk add --no-cache \
+    python3 \
+    py3-pip \
+    tesseract-ocr \
+    tesseract-ocr-data-eng \
+    git \
+    && ln -sf /usr/bin/python3 /usr/local/bin/python \
+    && ln -sf /usr/bin/pip3 /usr/local/bin/pip
 
 USER vscode
