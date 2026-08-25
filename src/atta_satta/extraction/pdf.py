@@ -1,8 +1,7 @@
-"""PDF text extraction with provenance metadata."""
+"""PDF text extraction with provenance metadata and scanned-page OCR fallback."""
 
 from __future__ import annotations
 
-from collections.abc import Iterator
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -15,13 +14,41 @@ class ExtractedPage:
     page_number: int
     text: str
     extraction_method: str = "pdf_text"
+    extraction_confidence: float | None = None
 
 
-def extract_pdf_text(source_path: Path) -> Iterator[ExtractedPage]:
-    """Yield text from each PDF page.
+def _ocr_pdf_page(page) -> tuple[str, float | None]:
+    """Render a PDF page and OCR it when the OCR dependencies are available."""
+    try:
+        import pytesseract
+        from PIL import Image
+    except ImportError as exc:
+        raise RuntimeError(
+            "Scanned PDF OCR requires the 'ocr' optional dependencies. "
+            "Install with: pip install -e '.[ocr]'"
+        ) from exc
 
-    PyMuPDF is imported lazily so the core package remains importable when the
-    optional document dependencies are not installed.
+    pixmap = page.get_pixmap(matrix=__import__("fitz").Matrix(2, 2), alpha=False)
+    image = Image.frombytes("RGB", [pixmap.width, pixmap.height], pixmap.samples)
+    text = pytesseract.image_to_string(image)
+    data = pytesseract.image_to_data(image, output_type=pytesseract.Output.DICT)
+    confidences = [
+        float(value)
+        for value in data.get("conf", [])
+        if str(value).strip() not in {"", "-1"}
+    ]
+    confidence = sum(confidences) / len(confidences) if confidences else None
+    return text, confidence
+
+
+def extract_pdf_text(source_path: Path) -> list[ExtractedPage]:
+    """Extract every PDF page, using OCR for pages with no embedded text.
+
+    Text-based pages retain the ``pdf_text`` provenance. Pages that contain no
+    usable embedded text are rendered and passed through Tesseract, preserving
+    ``pdf_ocr`` provenance and OCR confidence. This makes scanned lottery PDFs
+    part of the same reviewable ingestion pipeline instead of silently producing
+    zero candidates.
     """
     if not source_path.is_file():
         raise FileNotFoundError(source_path)
@@ -37,10 +64,29 @@ def extract_pdf_text(source_path: Path) -> Iterator[ExtractedPage]:
             "Install with: pip install -e '.[documents]'"
         ) from exc
 
+    pages: list[ExtractedPage] = []
     with fitz.open(source_path) as document:
         for index, page in enumerate(document):
-            yield ExtractedPage(
-                source_path=source_path,
-                page_number=index + 1,
-                text=page.get_text("text"),
+            text = page.get_text("text")
+            if text.strip():
+                pages.append(
+                    ExtractedPage(
+                        source_path=source_path,
+                        page_number=index + 1,
+                        text=text,
+                    )
+                )
+                continue
+
+            ocr_text, confidence = _ocr_pdf_page(page)
+            pages.append(
+                ExtractedPage(
+                    source_path=source_path,
+                    page_number=index + 1,
+                    text=ocr_text,
+                    extraction_method="pdf_ocr",
+                    extraction_confidence=confidence,
+                )
             )
+
+    return pages
