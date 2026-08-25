@@ -190,3 +190,7 @@ def main() -> None:
                 f"{result.name}\t{result.status}\t"
                 f"top-{args.top_k}={result.top_k_hit_rate:.4%}\t{result.note}"
             )
+
+
+if __name__ == "__main__":
+    main()
