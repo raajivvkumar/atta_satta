@@ -17,7 +17,7 @@ class ExtractedPage:
     extraction_confidence: float | None = None
 
 
-def _ocr_pdf_page(page, fitz_module) -> tuple[str, float | None]:
+def _ocr_pdf_page(page, pymupdf_module) -> tuple[str, float | None]:
     """Render a PDF page and OCR it when the OCR dependencies are available."""
     try:
         import pytesseract
@@ -28,7 +28,7 @@ def _ocr_pdf_page(page, fitz_module) -> tuple[str, float | None]:
             "Install with: pip install -e '.[ocr]'"
         ) from exc
 
-    pixmap = page.get_pixmap(matrix=fitz_module.Matrix(2, 2), alpha=False)
+    pixmap = page.get_pixmap(matrix=pymupdf_module.Matrix(2, 2), alpha=False)
     image = Image.frombytes("RGB", [pixmap.width, pixmap.height], pixmap.samples)
     text = pytesseract.image_to_string(image)
     data = pytesseract.image_to_data(image, output_type=pytesseract.Output.DICT)
@@ -57,7 +57,7 @@ def extract_pdf_text(source_path: Path) -> list[ExtractedPage]:
         raise ValueError(f"Expected a PDF file, received: {source_path.name}")
 
     try:
-        import fitz
+        import pymupdf
     except ImportError as exc:
         raise RuntimeError(
             "PDF extraction requires the 'documents' optional dependencies. "
@@ -65,7 +65,7 @@ def extract_pdf_text(source_path: Path) -> list[ExtractedPage]:
         ) from exc
 
     pages: list[ExtractedPage] = []
-    with fitz.open(source_path) as document:
+    with pymupdf.open(source_path) as document:
         for index, page in enumerate(document):
             text = page.get_text("text")
             if text.strip():
@@ -78,7 +78,7 @@ def extract_pdf_text(source_path: Path) -> list[ExtractedPage]:
                 )
                 continue
 
-            ocr_text, confidence = _ocr_pdf_page(page, fitz)
+            ocr_text, confidence = _ocr_pdf_page(page, pymupdf)
             pages.append(
                 ExtractedPage(
                     source_path=source_path,
