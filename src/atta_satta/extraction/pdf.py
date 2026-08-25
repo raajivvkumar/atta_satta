@@ -17,7 +17,7 @@ class ExtractedPage:
     extraction_confidence: float | None = None
 
 
-def _ocr_pdf_page(page) -> tuple[str, float | None]:
+def _ocr_pdf_page(page, fitz_module) -> tuple[str, float | None]:
     """Render a PDF page and OCR it when the OCR dependencies are available."""
     try:
         import pytesseract
@@ -28,7 +28,7 @@ def _ocr_pdf_page(page) -> tuple[str, float | None]:
             "Install with: pip install -e '.[ocr]'"
         ) from exc
 
-    pixmap = page.get_pixmap(matrix=__import__("fitz").Matrix(2, 2), alpha=False)
+    pixmap = page.get_pixmap(matrix=fitz_module.Matrix(2, 2), alpha=False)
     image = Image.frombytes("RGB", [pixmap.width, pixmap.height], pixmap.samples)
     text = pytesseract.image_to_string(image)
     data = pytesseract.image_to_data(image, output_type=pytesseract.Output.DICT)
@@ -78,7 +78,7 @@ def extract_pdf_text(source_path: Path) -> list[ExtractedPage]:
                 )
                 continue
 
-            ocr_text, confidence = _ocr_pdf_page(page)
+            ocr_text, confidence = _ocr_pdf_page(page, fitz)
             pages.append(
                 ExtractedPage(
                     source_path=source_path,
