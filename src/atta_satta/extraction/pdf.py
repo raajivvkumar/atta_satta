@@ -30,8 +30,14 @@ def _ocr_pdf_page(page, pymupdf_module) -> tuple[str, float | None]:
 
     pixmap = page.get_pixmap(matrix=pymupdf_module.Matrix(2, 2), alpha=False)
     image = Image.frombytes("RGB", [pixmap.width, pixmap.height], pixmap.samples)
-    text = pytesseract.image_to_string(image)
-    data = pytesseract.image_to_data(image, output_type=pytesseract.Output.DICT)
+    try:
+        text = pytesseract.image_to_string(image)
+        data = pytesseract.image_to_data(image, output_type=pytesseract.Output.DICT)
+    except pytesseract.TesseractNotFoundError as exc:
+        raise RuntimeError(
+            "Tesseract OCR is unavailable for this scanned PDF. Install the Tesseract "
+            "executable and add its directory to PATH, then restart the application."
+        ) from exc
     confidences = [
         float(value)
         for value in data.get("conf", [])

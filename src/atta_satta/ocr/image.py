@@ -38,9 +38,15 @@ def ocr_image(source_path: Path) -> OcrResult:
             "Install with: pip install -e '.[ocr]'"
         ) from exc
 
-    with Image.open(source_path) as image:
-        text = pytesseract.image_to_string(image)
-        data = pytesseract.image_to_data(image, output_type=pytesseract.Output.DICT)
+    try:
+        with Image.open(source_path) as image:
+            text = pytesseract.image_to_string(image)
+            data = pytesseract.image_to_data(image, output_type=pytesseract.Output.DICT)
+    except pytesseract.TesseractNotFoundError as exc:
+        raise RuntimeError(
+            "Tesseract OCR is unavailable. Install the Tesseract executable and add "
+            "its directory to PATH, then restart the application."
+        ) from exc
 
     confidences = [
         float(value)
