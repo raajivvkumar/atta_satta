@@ -164,6 +164,12 @@ XA1234567
 
 Each `TicketCandidate` retains normalized value, raw value, detected pattern, confidence and source-text positions. A separate general numeric-token extractor remains available because documents also contain dates, page numbers and unrelated numbers.
 
+The PDF/image result view uses the line-aware ranked extractor. It recognizes explicit
+labels such as `1st`, `Rank 2`, `Third Prize`, and `Position 4`, associates the
+nearest ticket on that result line (or the immediately following line), and displays
+only `Rank` and `Ticket Number`. Prize amounts are not displayed as results. When a
+document has no rank labels, source order is used as the fallback.
+
 ---
 
 # OCR State

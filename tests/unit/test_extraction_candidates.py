@@ -1,5 +1,6 @@
 from atta_satta.extraction.candidates import (
     extract_numeric_candidates,
+    extract_ranked_ticket_candidates,
     extract_ticket_candidates,
 )
 
@@ -39,3 +40,40 @@ def test_ticket_candidates_do_not_match_embedded_numbers() -> None:
     candidates = extract_ticket_candidates("XA1234567 12345678 123456")
 
     assert candidates == []
+
+
+def test_ranked_candidates_use_result_labels_and_ignore_amounts() -> None:
+    text = """
+    1st Prize: A123456 Amount: 50000
+    Second Prize - B123457 Rs. 25000
+    Rank 3: 1234568 10000
+    """
+
+    candidates = extract_ranked_ticket_candidates(text)
+
+    assert [(item.rank, item.ticket.value) for item in candidates] == [
+        (1, "A123456"),
+        (2, "B123457"),
+        (3, "1234568"),
+    ]
+
+
+def test_ranked_candidates_fall_back_to_source_order() -> None:
+    candidates = extract_ranked_ticket_candidates("A123456\nB123457\n1234568")
+
+    assert [(item.rank, item.ticket.value) for item in candidates] == [
+        (1, "A123456"),
+        (2, "B123457"),
+        (3, "1234568"),
+    ]
+
+
+def test_ranked_candidates_allow_rank_and_ticket_on_adjacent_lines() -> None:
+    candidates = extract_ranked_ticket_candidates(
+        "1st Prize\nA123456\n2nd Prize\nB123457"
+    )
+
+    assert [(item.rank, item.ticket.value) for item in candidates] == [
+        (1, "A123456"),
+        (2, "B123457"),
+    ]

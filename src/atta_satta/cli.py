@@ -10,7 +10,7 @@ from atta_satta.config import Settings
 from atta_satta.database.queries import LotteryReader
 from atta_satta.database.sqlite import LotteryRepository
 from atta_satta.evaluation.backtest import walk_forward_backtest
-from atta_satta.extraction.candidates import extract_ticket_candidates
+from atta_satta.extraction.candidates import extract_ranked_ticket_candidates
 from atta_satta.extraction.pdf import extract_pdf_text
 from atta_satta.models.comparison import compare_models
 from atta_satta.ocr.image import ocr_image
@@ -70,11 +70,11 @@ def main() -> None:
     if args.command == "ocr":
         source = args.source.resolve()
         result = ocr_image(source)
-        candidates = extract_ticket_candidates(result.text)
+        candidates = extract_ranked_ticket_candidates(result.text)
         print(f"Source: {source}")
         print("Rank\tTicket Number")
-        for rank, candidate in enumerate(candidates, start=1):
-            print(f"{rank}\t{candidate.value}")
+        for candidate in candidates:
+            print(f"{candidate.rank}\t{candidate.ticket.value}")
         print("Review candidates before importing; OCR does not guarantee correctness.")
         return
 

@@ -16,7 +16,7 @@ def run() -> None:
     from atta_satta.config import Settings
     from atta_satta.database.queries import LotteryReader
     from atta_satta.database.sqlite import LotteryRepository
-    from atta_satta.extraction.candidates import extract_ticket_candidates
+    from atta_satta.extraction.candidates import extract_ranked_ticket_candidates
     from atta_satta.extraction.pdf import extract_pdf_text
     from atta_satta.ingestion.files import describe_source_file
     from atta_satta.ocr.image import ocr_image
@@ -83,22 +83,28 @@ def run() -> None:
                     if suffix == ".pdf":
                         pages = list(extract_pdf_text(temp_path))
                         for page in pages:
-                            candidates = extract_ticket_candidates(page.text)
+                            candidates = extract_ranked_ticket_candidates(page.text)
                             st.dataframe(
                                 [
-                                    {"Rank": rank, "Ticket Number": candidate.value}
-                                    for rank, candidate in enumerate(candidates, start=1)
+                                    {
+                                        "Rank": candidate.rank,
+                                        "Ticket Number": candidate.ticket.value,
+                                    }
+                                    for candidate in candidates
                                 ],
                                 hide_index=True,
                                 use_container_width=True,
                             )
                     else:
                         result = ocr_image(temp_path)
-                        candidates = extract_ticket_candidates(result.text)
+                        candidates = extract_ranked_ticket_candidates(result.text)
                         st.dataframe(
                             [
-                                {"Rank": rank, "Ticket Number": candidate.value}
-                                for rank, candidate in enumerate(candidates, start=1)
+                                {
+                                    "Rank": candidate.rank,
+                                    "Ticket Number": candidate.ticket.value,
+                                }
+                                for candidate in candidates
                             ],
                             hide_index=True,
                             use_container_width=True,
