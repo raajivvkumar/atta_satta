@@ -56,8 +56,9 @@ def test_ocr_rejects_missing_file(tmp_path: Path) -> None:
 def test_ocr_reports_missing_tesseract_executable(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    import pytesseract
-    from PIL import Image
+    pytesseract = pytest.importorskip("pytesseract")
+    pil = pytest.importorskip("PIL")
+    Image = pil.Image
 
     source = tmp_path / "sample.png"
     Image.new("RGB", (10, 10), color="white").save(source)
