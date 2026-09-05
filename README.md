@@ -172,6 +172,14 @@ Image OCR is implemented with `pytesseract` and Pillow. The OCR flow validates t
 
 `pytesseract` is only a Python wrapper. The external **Tesseract executable must also be installed and available on `PATH`**. This was a real development environment issue encountered in Codespaces and is documented here so it is not mistaken for an application-code failure.
 
+On Windows, install Tesseract OCR, ensure its installation directory (commonly
+`C:\Program Files\Tesseract-OCR`) is on `PATH`, restart PowerShell or VS Code, and
+verify it with:
+
+```powershell
+tesseract --version
+```
+
 OCR is intentionally conservative: the system does not silently guess substitutions such as `O -> 0`.
 
 ---

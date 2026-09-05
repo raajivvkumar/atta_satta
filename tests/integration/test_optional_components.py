@@ -51,3 +51,21 @@ def test_pdf_extraction_rejects_missing_file(tmp_path: Path) -> None:
 def test_ocr_rejects_missing_file(tmp_path: Path) -> None:
     with pytest.raises(FileNotFoundError):
         ocr_image(tmp_path / "missing.png")
+
+
+def test_ocr_reports_missing_tesseract_executable(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    import pytesseract
+    from PIL import Image
+
+    source = tmp_path / "sample.png"
+    Image.new("RGB", (10, 10), color="white").save(source)
+
+    def raise_missing_executable(*args, **kwargs):
+        raise pytesseract.TesseractNotFoundError()
+
+    monkeypatch.setattr(pytesseract, "image_to_string", raise_missing_executable)
+
+    with pytest.raises(RuntimeError, match="Tesseract OCR is unavailable"):
+        ocr_image(source)
