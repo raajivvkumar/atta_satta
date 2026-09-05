@@ -10,13 +10,13 @@ The project studies whether historical lottery results, statistical features, te
 
 # Current Project State
 
-**State snapshot:** 2026-08-23  
-**Repository:** `raajivvkumar/atta_satta`  
-**Default branch:** `main`  
-**Version:** `0.1.0`  
-**Primary language:** Python 3.12+  
-**Persistence:** SQLite  
-**UI:** Streamlit  
+**State snapshot:** 2026-09-05<br>
+**Repository:** `raajivvkumar/atta_satta`<br>
+**Default branch:** `main`<br>
+**Version:** `0.1.0`<br>
+**Primary language:** Python 3.12+<br>
+**Persistence:** SQLite<br>
+**UI:** Streamlit
 **Package entry point:** `atta-satta`
 
 This README is the canonical handoff/state document for future development. Read it before starting a new implementation phase.
@@ -61,8 +61,8 @@ CLI + Streamlit dashboard
 | Logging | Application logging module implemented |
 | File ingestion | Supported-source validation, SHA-256 fingerprint and metadata implemented |
 | PDF extraction | Page-by-page text extraction with provenance implemented |
-| OCR | Tesseract image OCR with confidence metadata implemented |
-| Ticket detection | Prefixed and numeric ticket-pattern extraction implemented |
+| OCR | Tesseract image and scanned-PDF OCR with confidence metadata implemented |
+| Ticket detection | Line-aware ranked extraction for varied result formats implemented |
 | Normalization | Canonical lottery draw model and conservative normalization implemented |
 | Validation | Valid/review/invalid states and range validation implemented |
 | Duplicate handling | Non-destructive duplicate detection implemented |
@@ -76,8 +76,28 @@ CLI + Streamlit dashboard
 | Historical ML | Dependencies and readiness foundation exist; no validated production ML model yet |
 | Combined model | Explicitly disabled until component signals demonstrate out-of-sample improvement |
 | CLI | `stats`, `predict`, `backtest`, `models`, `ocr`, `import` implemented |
-| UI | Streamlit upload/review, statistics, ranking and evaluation status implemented |
+| UI | Streamlit upload/review, prize-labeled results, statistics, ranking and evaluation status implemented |
 | Tests | Unit and integration coverage implemented |
+
+## Latest saved state
+
+- The Streamlit dashboard runs with:
+
+  ```powershell
+  .\.venv\Scripts\streamlit.exe run src\atta_satta\ui\app.py
+  ```
+
+- Local dashboard URL: `http://127.0.0.1:8501`
+- Tesseract 5.4.0 is installed at `C:\Program Files\Tesseract-OCR\tesseract.exe`.
+- OCR automatically discovers `TESSERACT_CMD`, Tesseract on `PATH`, and the standard
+  Windows installation directories. A manual PATH restart is not required for the app.
+- Scanned PDFs are rendered page by page and processed through the same Tesseract
+  configuration as image uploads.
+- Result previews display only `Rank` and `Ticket Number`; prize amounts are excluded.
+- Rank labels are displayed as `1st Prize`, `2nd Prize`, `3rd Prize`, `4th Prize`, and
+  so on. Explicit labels in source text are preferred; unlabeled rows use source order.
+- Validation completed: full test suite passed, OCR integration tests passed, and Ruff
+  lint passed.
 
 ---
 
@@ -178,9 +198,10 @@ Image OCR is implemented with `pytesseract` and Pillow. The OCR flow validates t
 
 `pytesseract` is only a Python wrapper. The external **Tesseract executable must also be installed and available on `PATH`**. This was a real development environment issue encountered in Codespaces and is documented here so it is not mistaken for an application-code failure.
 
-On Windows, install Tesseract OCR, ensure its installation directory (commonly
-`C:\Program Files\Tesseract-OCR`) is on `PATH`, restart PowerShell or VS Code, and
-verify it with:
+On Windows, install Tesseract OCR. The application automatically checks the standard
+installation directory (`C:\Program Files\Tesseract-OCR`) even when it is not on the
+current process `PATH`. You can also set `TESSERACT_CMD` to an explicit executable
+path. To verify the installation manually:
 
 ```powershell
 tesseract --version
@@ -370,6 +391,8 @@ Implemented in `src/atta_satta/ui/app.py`.
 - image OCR preview
 - source SHA-256
 - OCR confidence
+- rank labels formatted as `1st Prize`, `2nd Prize`, `3rd Prize`, etc.
+- prize amounts excluded from the result preview
 - manual reviewed-result commit
 - validation before insertion
 

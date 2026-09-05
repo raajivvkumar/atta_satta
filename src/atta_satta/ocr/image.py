@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import os
+import shutil
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -14,6 +16,33 @@ class OcrResult:
     text: str
     extraction_method: str = "tesseract"
     confidence: float | None = None
+
+
+def configure_tesseract(pytesseract_module) -> None:
+    """Configure Tesseract from PATH, an environment override, or Windows defaults."""
+    if shutil.which("tesseract"):
+        return
+
+    candidates = []
+    configured_path = os.environ.get("TESSERACT_CMD")
+    if configured_path:
+        candidates.append(Path(configured_path))
+    if os.name == "nt":
+        candidates.extend(
+            [
+                Path(os.environ.get("ProgramFiles", r"C:\Program Files"))
+                / "Tesseract-OCR"
+                / "tesseract.exe",
+                Path(os.environ.get("ProgramFiles(x86)", r"C:\Program Files (x86)"))
+                / "Tesseract-OCR"
+                / "tesseract.exe",
+            ]
+        )
+
+    for candidate in candidates:
+        if candidate.is_file():
+            pytesseract_module.pytesseract.tesseract_cmd = str(candidate)
+            return
 
 
 def ocr_image(source_path: Path) -> OcrResult:
@@ -38,6 +67,7 @@ def ocr_image(source_path: Path) -> OcrResult:
             "Install with: pip install -e '.[ocr]'"
         ) from exc
 
+    configure_tesseract(pytesseract)
     try:
         with Image.open(source_path) as image:
             text = pytesseract.image_to_string(image)

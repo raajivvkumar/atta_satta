@@ -26,6 +26,16 @@ class RankedTicketCandidate:
     ticket: TicketCandidate
 
 
+def prize_label(rank: int) -> str:
+    """Format a positive result rank as a human-readable prize label."""
+    if rank < 1:
+        raise ValueError("rank must be positive")
+    suffix = "th" if 10 <= rank % 100 <= 20 else {1: "st", 2: "nd", 3: "rd"}.get(
+        rank % 10, "th"
+    )
+    return f"{rank}{suffix} Prize"
+
+
 # Explicit patterns are deliberately conservative. A numeric ticket is only
 # recognized when it contains exactly seven digits; prefixed tickets contain
 # one letter and exactly six digits, optionally separated by - or whitespace.

@@ -2,6 +2,7 @@ from atta_satta.extraction.candidates import (
     extract_numeric_candidates,
     extract_ranked_ticket_candidates,
     extract_ticket_candidates,
+    prize_label,
 )
 
 
@@ -76,4 +77,17 @@ def test_ranked_candidates_allow_rank_and_ticket_on_adjacent_lines() -> None:
     assert [(item.rank, item.ticket.value) for item in candidates] == [
         (1, "A123456"),
         (2, "B123457"),
+    ]
+
+
+def test_prize_label_uses_correct_ordinal_suffixes() -> None:
+    assert [prize_label(rank) for rank in (1, 2, 3, 4, 11, 12, 13, 21)] == [
+        "1st Prize",
+        "2nd Prize",
+        "3rd Prize",
+        "4th Prize",
+        "11th Prize",
+        "12th Prize",
+        "13th Prize",
+        "21st Prize",
     ]

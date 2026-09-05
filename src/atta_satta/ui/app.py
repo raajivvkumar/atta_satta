@@ -16,7 +16,10 @@ def run() -> None:
     from atta_satta.config import Settings
     from atta_satta.database.queries import LotteryReader
     from atta_satta.database.sqlite import LotteryRepository
-    from atta_satta.extraction.candidates import extract_ranked_ticket_candidates
+    from atta_satta.extraction.candidates import (
+        extract_ranked_ticket_candidates,
+        prize_label,
+    )
     from atta_satta.extraction.pdf import extract_pdf_text
     from atta_satta.ingestion.files import describe_source_file
     from atta_satta.ocr.image import ocr_image
@@ -87,7 +90,7 @@ def run() -> None:
                             st.dataframe(
                                 [
                                     {
-                                        "Rank": candidate.rank,
+                                        "Rank": prize_label(candidate.rank),
                                         "Ticket Number": candidate.ticket.value,
                                     }
                                     for candidate in candidates
@@ -101,7 +104,7 @@ def run() -> None:
                         st.dataframe(
                             [
                                 {
-                                    "Rank": candidate.rank,
+                                    "Rank": prize_label(candidate.rank),
                                     "Ticket Number": candidate.ticket.value,
                                 }
                                 for candidate in candidates

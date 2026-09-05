@@ -8,7 +8,7 @@ import pytest
 from atta_satta.extraction.pdf import extract_pdf_text
 from atta_satta.ingestion.files import describe_source_file
 from atta_satta.normalization.models import LotteryDraw
-from atta_satta.ocr.image import ocr_image
+from atta_satta.ocr.image import configure_tesseract, ocr_image
 from atta_satta.prediction.ranking import rank_candidates
 from atta_satta.statistics.analysis import distribution_summary, frequency_table
 
@@ -70,3 +70,21 @@ def test_ocr_reports_missing_tesseract_executable(
 
     with pytest.raises(RuntimeError, match="Tesseract OCR is unavailable"):
         ocr_image(source)
+
+
+def test_configure_tesseract_discovers_windows_installation(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    pytesseract = pytest.importorskip("pytesseract")
+    executable = tmp_path / "Tesseract-OCR" / "tesseract.exe"
+    executable.parent.mkdir()
+    executable.write_bytes(b"")
+    monkeypatch.setattr("atta_satta.ocr.image.os.name", "nt")
+    monkeypatch.setenv("ProgramFiles", str(tmp_path))
+    monkeypatch.setattr("atta_satta.ocr.image.shutil.which", lambda _: None)
+
+    configure_tesseract(pytesseract)
+
+    assert pytesseract.pytesseract.tesseract_cmd == str(
+        tmp_path / "Tesseract-OCR" / "tesseract.exe"
+    )

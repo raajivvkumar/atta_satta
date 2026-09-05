@@ -5,6 +5,8 @@ from __future__ import annotations
 from dataclasses import dataclass
 from pathlib import Path
 
+from atta_satta.ocr.image import configure_tesseract
+
 
 @dataclass(frozen=True, slots=True)
 class ExtractedPage:
@@ -28,6 +30,7 @@ def _ocr_pdf_page(page, pymupdf_module) -> tuple[str, float | None]:
             "Install with: pip install -e '.[ocr]'"
         ) from exc
 
+    configure_tesseract(pytesseract)
     pixmap = page.get_pixmap(matrix=pymupdf_module.Matrix(2, 2), alpha=False)
     image = Image.frombytes("RGB", [pixmap.width, pixmap.height], pixmap.samples)
     try:
