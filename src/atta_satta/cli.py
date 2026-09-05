@@ -72,17 +72,9 @@ def main() -> None:
         result = ocr_image(source)
         candidates = extract_ticket_candidates(result.text)
         print(f"Source: {source}")
-        confidence = result.confidence if result.confidence is not None else "N/A"
-        print(f"OCR confidence: {confidence}")
-        print(f"Detected ticket candidates: {len(candidates)}")
-        print("Pattern\tTicket\tConfidence\tRaw")
-        for candidate in candidates:
-            print(
-                f"{candidate.pattern}\t{candidate.value}\t"
-                f"{candidate.confidence}\t{candidate.raw_value!r}"
-            )
-        print("\nOCR output:")
-        print(result.text)
+        print("Rank\tTicket Number")
+        for rank, candidate in enumerate(candidates, start=1):
+            print(f"{rank}\t{candidate.value}")
         print("Review candidates before importing; OCR does not guarantee correctness.")
         return
 
@@ -107,9 +99,14 @@ def main() -> None:
                     minimum_ticket=args.minimum,
                     maximum_ticket=args.maximum,
                 )
+                confidence = (
+                    page.extraction_confidence
+                    if page.extraction_confidence is not None
+                    else "N/A"
+                )
                 print(
                     f"Page {page.page_number}: method={page.extraction_method} "
-                    f"confidence={page.extraction_confidence if page.extraction_confidence is not None else 'N/A'} "
+                    f"confidence={confidence} "
                     f"candidates={inserted}"
                 )
                 total += inserted
