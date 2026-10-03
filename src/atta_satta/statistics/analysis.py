@@ -53,14 +53,16 @@ def frequency_table(records: list[LotteryDraw]) -> list[NumberStatistic]:
 
 
 def distribution_summary(records: list[LotteryDraw]) -> DistributionSummary:
+    """Summarize all records while calculating numeric-only distribution metrics."""
     numbers = [int(record.ticket_number) for record in records if record.ticket_number.isdigit()]
+    unique_tickets = len({record.ticket_number for record in records})
     if not numbers:
-        return DistributionSummary(len(records), 0, None, None, None, None)
+        return DistributionSummary(len(records), unique_tickets, None, None, None, None)
     average = mean(numbers)
     variance = mean((value - average) ** 2 for value in numbers)
     return DistributionSummary(
         total_records=len(records),
-        unique_numbers=len(set(numbers)),
+        unique_numbers=unique_tickets,
         min_number=min(numbers),
         max_number=max(numbers),
         mean_number=average,
