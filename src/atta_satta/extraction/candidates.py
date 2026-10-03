@@ -35,13 +35,13 @@ _TICKET_PATTERNS: tuple[tuple[str, re.Pattern[str]], ...] = (
 )
 
 # Range-based extraction is used by the importer for games such as 0..99.
-# Mask obvious dates, times and page labels first so ordinary document metadata
-# is less likely to be mistaken for a draw result.
+# Mask obvious dates, times and explicit pagination first so ordinary document
+# metadata is less likely to be mistaken for a draw result.
 _METADATA_PATTERNS: tuple[re.Pattern[str], ...] = (
     re.compile(r"\b\d{4}[/-]\d{1,2}[/-]\d{1,2}\b"),
     re.compile(r"\b\d{1,2}[/-]\d{1,2}[/-]\d{2,4}\b"),
     re.compile(r"\b\d{1,2}:\d{2}(?::\d{2})?\b"),
-    re.compile(r"\bpage\s+\d+(?:\s+of\s+\d+)?\b", re.IGNORECASE),
+    re.compile(r"\bpage\s+\d+\s+of\s+\d+\b", re.IGNORECASE),
 )
 
 
@@ -105,9 +105,9 @@ def extract_numeric_candidates(
     """Extract standalone numeric tokens in a configured range for review.
 
     ``fixed_width`` is useful for large ticket spaces where short metadata
-    values should not be treated as tickets. Date/time/page metadata is masked
-    before extraction, and digits embedded in alphanumeric identifiers are
-    excluded.
+    values should not be treated as tickets. Date/time/pagination metadata is
+    masked before extraction, and digits embedded in alphanumeric identifiers
+    are excluded.
     """
     if minimum > maximum:
         raise ValueError("minimum must not exceed maximum")
