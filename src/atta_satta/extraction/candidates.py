@@ -34,9 +34,28 @@ _TICKET_PATTERNS: tuple[tuple[str, re.Pattern[str]], ...] = (
     ),
 )
 
+# Range-based extraction is used by the importer for games such as 0..99.
+# Mask obvious dates, times and explicit pagination first so ordinary document
+# metadata is less likely to be mistaken for a draw result.
+_METADATA_PATTERNS: tuple[re.Pattern[str], ...] = (
+    re.compile(r"\b\d{4}[/-]\d{1,2}[/-]\d{1,2}\b"),
+    re.compile(r"\b\d{1,2}[/-]\d{1,2}[/-]\d{2,4}\b"),
+    re.compile(r"\b\d{1,2}:\d{2}(?::\d{2})?\b"),
+    re.compile(r"\bpage\s+\d+\s+of\s+\d+\b", re.IGNORECASE),
+)
+
 
 def _normalize_prefixed(letter: str, digits: str) -> str:
     return f"{letter.upper()}{digits}"
+
+
+def _mask_metadata(text: str) -> str:
+    """Replace obvious non-result metadata with spaces while preserving offsets."""
+    characters = list(text)
+    for pattern in _METADATA_PATTERNS:
+        for match in pattern.finditer(text):
+            characters[match.start() : match.end()] = " " * (match.end() - match.start())
+    return "".join(characters)
 
 
 def extract_ticket_candidates(text: str) -> list[TicketCandidate]:
@@ -76,18 +95,32 @@ def extract_ticket_candidates(text: str) -> list[TicketCandidate]:
     return candidates
 
 
-def extract_numeric_candidates(text: str, *, minimum: int, maximum: int) -> list[str]:
-    """Extract numeric tokens in a configured range for human review.
+def extract_numeric_candidates(
+    text: str,
+    *,
+    minimum: int,
+    maximum: int,
+    fixed_width: int | None = None,
+) -> list[str]:
+    """Extract standalone numeric tokens in a configured range for review.
 
-    This legacy/general-purpose extractor remains intentionally separate from
-    structured ticket detection because dates, page numbers and other document
-    numbers may also match.
+    ``fixed_width`` is useful for large ticket spaces where short metadata
+    values should not be treated as tickets. Date/time/pagination metadata is
+    masked before extraction, and digits embedded in alphanumeric identifiers
+    are excluded.
     """
     if minimum > maximum:
         raise ValueError("minimum must not exceed maximum")
+    if fixed_width is not None and fixed_width < 1:
+        raise ValueError("fixed_width must be positive")
+
+    searchable = _mask_metadata(text)
     candidates: list[str] = []
     seen: set[str] = set()
-    for token in re.findall(r"(?<!\d)\d+(?!\d)", text):
+    for match in re.finditer(r"(?<![A-Za-z0-9])\d+(?![A-Za-z0-9])", searchable):
+        token = text[match.start() : match.end()]
+        if fixed_width is not None and len(token) != fixed_width:
+            continue
         number = int(token)
         if minimum <= number <= maximum and token not in seen:
             seen.add(token)

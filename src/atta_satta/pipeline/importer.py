@@ -7,7 +7,10 @@ from datetime import UTC, date, datetime
 from pathlib import Path
 
 from atta_satta.database.sqlite import LotteryRepository
-from atta_satta.extraction.candidates import extract_ticket_candidates
+from atta_satta.extraction.candidates import (
+    extract_numeric_candidates,
+    extract_ticket_candidates,
+)
 from atta_satta.ingestion.files import describe_source_file
 from atta_satta.normalization.models import LotteryDraw, RecordStatus
 from atta_satta.normalization.text import normalize_ticket_number
@@ -87,6 +90,15 @@ def import_candidates(
     return repository.add_draws(draws)
 
 
+def _range_width(minimum_ticket: int, maximum_ticket: int) -> int | None:
+    """Use an exact numeric width for large ranges to avoid short metadata values."""
+    if minimum_ticket < 0 or maximum_ticket < 0:
+        return None
+    if maximum_ticket < 10_000:
+        return None
+    return len(str(maximum_ticket))
+
+
 def extract_import_candidates(
     text: str,
     *,
@@ -96,25 +108,62 @@ def extract_import_candidates(
     source_page: int | None = None,
     extraction_method: str = "unknown",
     extraction_confidence: float | None = None,
+    minimum_ticket: int | None = None,
+    maximum_ticket: int | None = None,
 ) -> list[ImportCandidate]:
     """Convert detected ticket patterns into import-ready candidates.
+
+    Structured ticket detection remains the first signal. When a configured
+    numeric range is supplied, standalone numeric values in that range are also
+    detected. This is required for games whose actual results are values such
+    as 0..99 instead of seven-digit ticket identifiers.
 
     Detection is deliberately separate from validation. Every detected ticket
     is retained with its raw source text so callers can review it before commit.
     """
-    return [
-        ImportCandidate(
-            game=game,
-            draw_date=draw_date,
-            ticket_number=candidate.value,
-            source_path=source_path,
-            source_page=source_page,
-            extraction_method=extraction_method,
-            extraction_confidence=extraction_confidence,
-            original_text=candidate.raw_value,
+    candidates: list[ImportCandidate] = []
+    seen: set[str] = set()
+
+    for detected in extract_ticket_candidates(text):
+        seen.add(detected.value)
+        candidates.append(
+            ImportCandidate(
+                game=game,
+                draw_date=draw_date,
+                ticket_number=detected.value,
+                source_path=source_path,
+                source_page=source_page,
+                extraction_method=extraction_method,
+                extraction_confidence=extraction_confidence,
+                original_text=detected.raw_value,
+            )
         )
-        for candidate in extract_ticket_candidates(text)
-    ]
+
+    if minimum_ticket is not None and maximum_ticket is not None:
+        numeric_values = extract_numeric_candidates(
+            text,
+            minimum=minimum_ticket,
+            maximum=maximum_ticket,
+            fixed_width=_range_width(minimum_ticket, maximum_ticket),
+        )
+        for value in numeric_values:
+            if value in seen:
+                continue
+            seen.add(value)
+            candidates.append(
+                ImportCandidate(
+                    game=game,
+                    draw_date=draw_date,
+                    ticket_number=value,
+                    source_path=source_path,
+                    source_page=source_page,
+                    extraction_method=extraction_method,
+                    extraction_confidence=extraction_confidence,
+                    original_text=value,
+                )
+            )
+
+    return candidates
 
 
 def import_extracted_text(
@@ -139,6 +188,8 @@ def import_extracted_text(
         source_page=source_page,
         extraction_method=extraction_method,
         extraction_confidence=extraction_confidence,
+        minimum_ticket=minimum_ticket,
+        maximum_ticket=maximum_ticket,
     )
     return import_candidates(
         repository,

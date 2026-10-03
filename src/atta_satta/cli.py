@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import argparse
+from collections import Counter
 from datetime import date
 from pathlib import Path
 
@@ -107,10 +108,14 @@ def main() -> None:
                     minimum_ticket=args.minimum,
                     maximum_ticket=args.maximum,
                 )
+                confidence = (
+                    page.extraction_confidence
+                    if page.extraction_confidence is not None
+                    else "N/A"
+                )
                 print(
                     f"Page {page.page_number}: method={page.extraction_method} "
-                    f"confidence={page.extraction_confidence if page.extraction_confidence is not None else 'N/A'} "
-                    f"candidates={inserted}"
+                    f"confidence={confidence} candidates={inserted}"
                 )
                 total += inserted
         elif suffix in {".png", ".jpg", ".jpeg", ".tif", ".tiff", ".webp"}:
@@ -130,6 +135,21 @@ def main() -> None:
             raise ValueError(f"Unsupported source format: {source.suffix}")
 
         print(f"Detected/imported ticket candidates: {total}")
+        if total == 0:
+            print(
+                "No candidates matched the extracted text and configured result range. "
+                "Check the OCR/PDF text and pass --minimum/--maximum for the actual game, "
+                "for example --minimum 0 --maximum 99."
+            )
+
+        imported_records = LotteryReader(database).records(game=args.game)
+        status_counts = Counter(record.status.value for record in imported_records)
+        print(
+            "Database status for game: "
+            f"valid={status_counts.get('valid', 0)} "
+            f"review={status_counts.get('review', 0)} "
+            f"invalid={status_counts.get('invalid', 0)}"
+        )
         print("Review status is preserved; extraction does not guarantee correctness.")
         return
 

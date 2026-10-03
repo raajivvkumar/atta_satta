@@ -104,3 +104,42 @@ def test_import_extracted_text_persists_detected_tickets(tmp_path) -> None:
     records = LotteryReader(database).records()
     assert [record.ticket_number for record in records] == ["A123456", "1234568"]
     assert all(record.status is RecordStatus.VALID for record in records)
+
+
+def test_import_extracted_text_uses_configured_small_result_range(tmp_path) -> None:
+    source = tmp_path / "results.pdf"
+    source.write_bytes(b"source")
+    database = tmp_path / "db.sqlite3"
+    repository = LotteryRepository(database)
+
+    count = import_extracted_text(
+        repository,
+        "Draw results: 12 47 88\nDate: 2026-08-23\nPage 1 of 2",
+        game="Atta Satta",
+        draw_date=date(2026, 8, 23),
+        source_path=source,
+        source_page=1,
+        extraction_method="pdf_text",
+        minimum_ticket=0,
+        maximum_ticket=99,
+    )
+
+    assert count == 3
+    records = LotteryReader(database).records(valid_only=True)
+    assert [record.ticket_number for record in records] == ["12", "47", "88"]
+
+
+def test_large_range_numeric_fallback_requires_large_ticket_width(tmp_path) -> None:
+    source = tmp_path / "results.pdf"
+    source.write_bytes(b"source")
+
+    candidates = extract_import_candidates(
+        "Page 2 result 1234568",
+        game="Example",
+        draw_date=date(2026, 8, 23),
+        source_path=source,
+        minimum_ticket=0,
+        maximum_ticket=9_999_999,
+    )
+
+    assert [candidate.ticket_number for candidate in candidates] == ["1234568"]
