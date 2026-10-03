@@ -108,10 +108,14 @@ def main() -> None:
                     minimum_ticket=args.minimum,
                     maximum_ticket=args.maximum,
                 )
+                confidence = (
+                    page.extraction_confidence
+                    if page.extraction_confidence is not None
+                    else "N/A"
+                )
                 print(
                     f"Page {page.page_number}: method={page.extraction_method} "
-                    f"confidence={page.extraction_confidence if page.extraction_confidence is not None else 'N/A'} "
-                    f"candidates={inserted}"
+                    f"confidence={confidence} candidates={inserted}"
                 )
                 total += inserted
         elif suffix in {".png", ".jpg", ".jpeg", ".tif", ".tiff", ".webp"}:
