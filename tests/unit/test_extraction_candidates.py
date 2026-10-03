@@ -9,6 +9,23 @@ def test_numeric_candidates_are_unique_and_range_limited() -> None:
     assert extract_numeric_candidates(text, minimum=0, maximum=99) == ["12", "99"]
 
 
+def test_numeric_candidates_ignore_dates_times_pages_and_embedded_ids() -> None:
+    text = "Date 2026-08-23 time 10:30 Page 1 of 2 IDA12 result 47 88"
+
+    assert extract_numeric_candidates(text, minimum=0, maximum=99) == ["47", "88"]
+
+
+def test_numeric_candidates_can_require_fixed_width() -> None:
+    text = "page 2 values 123 1234568 7654321"
+
+    assert extract_numeric_candidates(
+        text,
+        minimum=0,
+        maximum=9_999_999,
+        fixed_width=7,
+    ) == ["1234568", "7654321"]
+
+
 def test_ticket_candidates_detect_prefixed_and_numeric_patterns() -> None:
     text = "A123456 B123456 C123457 A-123456 B-123456 C-123456 1234568 1234587 1234659"
 
